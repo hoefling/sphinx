@@ -111,10 +111,10 @@ class SphinxTestApp(application.Sphinx):
 
         builddir = srcdir / '_build'
         confdir = srcdir
-        outdir = builddir.joinpath(buildername)
-        outdir.makedirs(exist_ok=True)
-        doctreedir = builddir.joinpath('doctrees')
-        doctreedir.makedirs(exist_ok=True)
+        outdir = builddir / buildername
+        outdir.mkdir(exist_ok=True, parents=True)
+        doctreedir = builddir / 'doctrees'
+        doctreedir.mkdir(exist_ok=True, parents=True)
         if confoverrides is None:
             confoverrides = {}
         warningiserror = False

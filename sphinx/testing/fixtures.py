@@ -235,7 +235,7 @@ def sphinx_test_tempdir(tmpdir_factory: Any) -> "util.path":
     temporary directory that wrapped with `path` class.
     """
     tmpdir = tmpdir_factory.getbasetemp()
-    return util.path(tmpdir).abspath()
+    return util.path(tmpdir).absolute()
 
 
 @pytest.fixture

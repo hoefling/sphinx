@@ -9,6 +9,7 @@
 """
 
 import os
+import pathlib
 from glob import glob
 from typing import TYPE_CHECKING
 
@@ -67,16 +68,16 @@ class Project:
 
         return self.docnames
 
-    def path2doc(self, filename):
+    def path2doc(self, filename: pathlib.Path) -> str:
         # type: (str) -> str
         """Return the docname for the filename if the file is document.
 
         *filename* should be absolute or relative to the source directory.
         """
-        if filename.startswith(self.srcdir):
-            filename = relpath(filename, self.srcdir)
+        if self.srcdir in pathlib.Path(filename).parents:
+            filename = pathlib.Path(relpath(filename, self.srcdir))
         for suffix in self.source_suffix:
-            if filename.endswith(suffix):
+            if filename.suffix == suffix:
                 filename = path_stabilize(filename)
                 return filename[:-len(suffix)]
 

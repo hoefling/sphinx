@@ -8,68 +8,35 @@
 
 import builtins
 import os
+import pathlib
 import shutil
 import sys
 import warnings
-from typing import IO, Any, Callable, List
+from typing import Any, Callable, IO, List, Union, TYPE_CHECKING
 
 from sphinx.deprecation import RemovedInSphinx50Warning
 
 FILESYSTEMENCODING = sys.getfilesystemencoding() or sys.getdefaultencoding()
 
 
-class path(str):
+if TYPE_CHECKING:
+    _PathLike = Union[str, os.PathLike[str]]
+else:
+    _PathLike = Union[str, os.PathLike]
+
+
+class path(type(pathlib.Path())):
     """
-    Represents a path which behaves like a string.
+    Represents a path with extended functionality.
     """
 
-    @property
-    def parent(self) -> "path":
-        """
-        The name of the directory the file or directory is in.
-        """
-        return self.__class__(os.path.dirname(self))
-
-    def basename(self) -> str:
-        return os.path.basename(self)
-
-    def abspath(self) -> "path":
-        """
-        Returns the absolute path.
-        """
-        return self.__class__(os.path.abspath(self))
-
-    def isabs(self) -> bool:
-        """
-        Returns ``True`` if the path is absolute.
-        """
-        return os.path.isabs(self)
-
-    def isdir(self) -> bool:
-        """
-        Returns ``True`` if the path is a directory.
-        """
-        return os.path.isdir(self)
-
-    def isfile(self) -> bool:
-        """
-        Returns ``True`` if the path is a file.
-        """
-        return os.path.isfile(self)
-
-    def islink(self) -> bool:
-        """
-        Returns ``True`` if the path is a symbolic link.
-        """
-        return os.path.islink(self)
-
-    def ismount(self) -> bool:
+    def is_mount(self) -> bool:
         """
         Returns ``True`` if the path is a mount point.
         """
         return os.path.ismount(self)
 
-    def rmtree(self, ignore_errors: bool = False, onerror: Callable = None) -> None:
+    def rmtree(self, ignore_errors: bool = False, onerror: Callable[[Any, Any, Any], Any] = None) -> None:
         """
         Removes the file or directory and any files or directories it may
         contain.
@@ -87,7 +54,7 @@ class path(str):
         """
         shutil.rmtree(self, ignore_errors=ignore_errors, onerror=onerror)
 
-    def copytree(self, destination: str, symlinks: bool = False) -> None:
+    def copytree(self, destination: _PathLike, symlinks: bool = False) -> None:
         """
         Recursively copy a directory to the given `destination`. If the given
         `destination` does not exist it will be created.
@@ -99,7 +66,7 @@ class path(str):
         """
         shutil.copytree(self, destination, symlinks=symlinks)
 
-    def movetree(self, destination: str) -> None:
+    def movetree(self, destination: _PathLike) -> None:
         """
         Recursively move the file or directory to the given `destination`
         similar to the  Unix "mv" command.
@@ -111,80 +78,8 @@ class path(str):
 
     move = movetree
 
-    def unlink(self) -> None:
-        """
-        Removes a file.
-        """
-        os.unlink(self)
-
-    def stat(self) -> Any:
-        """
-        Returns a stat of the file.
-        """
-        return os.stat(self)
-
     def utime(self, arg: Any) -> None:
         os.utime(self, arg)
-
-    def open(self, mode: str = 'r', **kwargs: Any) -> IO:
-        return open(self, mode, **kwargs)
-
-    def write_text(self, text: str, encoding: str = 'utf-8', **kwargs: Any) -> None:
-        """
-        Writes the given `text` to the file.
-        """
-        with open(self, 'w', encoding=encoding, **kwargs) as f:
-            f.write(text)
-
-    def text(self, encoding: str = 'utf-8', **kwargs: Any) -> str:
-        """
-        Returns the text in the file.
-        """
-        warnings.warn('Path.text() is deprecated.  Please use read_text() instead.',
-                      RemovedInSphinx50Warning, stacklevel=2)
-        return self.read_text(encoding, **kwargs)
-
-    def read_text(self, encoding: str = 'utf-8', **kwargs: Any) -> str:
-        """
-        Returns the text in the file.
-        """
-        with open(self, encoding=encoding, **kwargs) as f:
-            return f.read()
-
-    def bytes(self) -> builtins.bytes:
-        """
-        Returns the bytes in the file.
-        """
-        warnings.warn('Path.bytes() is deprecated.  Please use read_bytes() instead.',
-                      RemovedInSphinx50Warning, stacklevel=2)
-        return self.read_bytes()
-
-    def read_bytes(self) -> builtins.bytes:
-        """
-        Returns the bytes in the file.
-        """
-        with open(self, mode='rb') as f:
-            return f.read()
-
-    def write_bytes(self, bytes: str, append: bool = False) -> None:
-        """
-        Writes the given `bytes` to the file.
-
-        :param append:
-            If ``True`` given `bytes` are added at the end of the file.
-        """
-        if append:
-            mode = 'ab'
-        else:
-            mode = 'wb'
-        with open(self, mode=mode) as f:
-            f.write(bytes)
-
-    def exists(self) -> bool:
-        """
-        Returns ``True`` if the path exist.
-        """
-        return os.path.exists(self)
 
     def lexists(self) -> bool:
         """
@@ -192,23 +87,3 @@ class path(str):
         link.
         """
         return os.path.lexists(self)
-
-    def makedirs(self, mode: int = 0o777, exist_ok: bool = False) -> None:
-        """
-        Recursively create directories.
-        """
-        os.makedirs(self, mode, exist_ok=exist_ok)
-
-    def joinpath(self, *args: Any) -> "path":
-        """
-        Joins the path with the argument given and returns the result.
-        """
-        return self.__class__(os.path.join(self, *map(self.__class__, args)))
-
-    def listdir(self) -> List[str]:
-        return os.listdir(self)
-
-    __div__ = __truediv__ = joinpath
-
-    def __repr__(self) -> str:
-        return '%s(%s)' % (self.__class__.__name__, super().__repr__())
